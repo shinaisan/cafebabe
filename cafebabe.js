@@ -41,7 +41,7 @@ $(window).load(function(){
             var first = true;
             for (var bit in accessFlagNames) {
                 if (acc & bit) {
-                    str += (first ? "" : "|") + accessFlagNames[bit];
+                    str += (first ? "" : " | ") + accessFlagNames[bit];
                     first = false;
                 }
             }
