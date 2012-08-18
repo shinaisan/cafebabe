@@ -18,6 +18,35 @@ $(window).load(function(){
             16 : "MethodType",
             18 : "InvokeDynamic"
         };
+        // Access flags
+        var accessFlagNames = {
+            0x0001 : "PUBLIC",
+            0x0002 : "PRIVATE",
+            0x0004 : "PROTECTED",
+            0x0008 : "STATIC",
+            0x0010 : "FINAL",
+            0x0020 : "SUPER",
+            0x0040 : "VOLATILE",
+            0x0080 : "TRANSIENT",
+            0x0200 : "INTERFACE",
+            0x0400 : "ABSTRACT",
+            0x1000 : "SYNTHETIC",
+            0x2000 : "ANNOTATION",
+            0x4000 : "ENUM"
+        };
+        // Convert an access flag to a string containing all names of bits set in the flag.
+        // The resulting string is delimited by a pipe '|' character.
+        function accessFlagToString(acc) {
+            var str = "";
+            var first = true;
+            for (var bit in accessFlagNames) {
+                if (acc & bit) {
+                    str += (first ? "" : "|") + accessFlagNames[bit];
+                    first = false;
+                }
+            }
+            return str;
+        }
         // Convert an integer d to a hexadecimal string of length padding (default 2).
         function dec2hex(d, padding) {
             var hex = Number(d >>> 0).toString(16);
@@ -103,9 +132,9 @@ $(window).load(function(){
             this.latestDump = dec2hex(b1) + " " + dec2hex(b2) + " " + dec2hex(b3) + " " + dec2hex(b4);
             return ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
         }
-        DataInputB.prototype.utf8 = function(length) {
+        DataInputB.prototype.subarray = function(length) {
             if (length <= 0) {
-                return "";
+                return [];
             }
             var sa = this.buffer.subarray(this.cursor, this.cursor + length);
             this.cursor += length;
@@ -114,7 +143,13 @@ $(window).load(function(){
                 d += dec2hex(sa[i]) + " ";
             }
             this.latestDump = d;
-            return utf8ToString(sa);
+            return sa;
+        }
+        DataInputB.prototype.utf8 = function(length) {
+            if (length <= 0) {
+                return "";
+            }
+            return utf8ToString(this.subarray(length));
         }
         // Generate a li element contains information of a member of a class file;
         // caption: its name, str: its value, addr: its offset in file, dump: the hex-dump of its content.
@@ -135,6 +170,78 @@ $(window).load(function(){
             var address = input.cursor;
             var d = input.u4();
             return classFileMember(caption, "0x" + dec2hex(d) + " = " + d.toString(), address, input.latestDump);
+        }
+        // input: DataInputB
+        function classFileMemberBytes(input, caption, length) {
+            var address = input.cursor;
+            var sa = input.subarray(length);
+            return classFileMember(caption, " ", address, input.latestDump);
+        }
+        // Add access_flags node.
+        // input: DataInputB
+        function accessFlags(input, caption) {
+            var address = input.cursor;
+            var accessFlag = input.u2();
+            return classFileMember(caption,
+                                   accessFlagToString(accessFlag) + " (0x" + dec2hex(accessFlag.toString()) + ")",
+                                   address, input.latestDump);
+        }
+        // Read attributes.
+        // But do not dig into the "info" bytes.
+        function readAttributes(input, attributes_count) {
+            // attribute_info attributes[attributes_count];
+            address = input.cursor;
+            var attributesRoot = classFileMember("attributes", "", address, "...");
+            // attributesRoot.appendTo(fldContainer);
+            var attributesContainer = $("<ul/>");
+            attributesContainer.appendTo(attributesRoot);
+            for (var j = 0; j < attributes_count; j++) {
+                address = input.cursor;
+                var attrRoot = classFileMember("attribute[" + j.toString() + "]", "", address, "...");
+                attrRoot.appendTo(attributesContainer);
+                var attrContainer = $("<ul/>");
+                attrContainer.appendTo(attrRoot);
+                // u2 attribute_name_index;
+                classFileMemberU2(input, "attribute_name_index").appendTo(attrContainer);
+                // u4 attribute_length;
+                address = input.cursor;
+                var attribute_length = input.u4();
+                classFileMember("attribute_length", attribute_length.toString(), address, input.latestDump)
+                    .appendTo(attrContainer);
+                // u1 info[attribute_length];
+                classFileMemberBytes(input, "info", attribute_length).appendTo(attrContainer);
+            }
+            return attributesRoot;
+        }
+        // Read fields or methods depending on the given fields type.
+        // fieldsType: Either "field" or "method"
+        function readFields(input, fields_count, fieldsType) {
+            address = input.cursor;
+            var fieldsRoot = classFileMember(fieldsType + "s", "", address, "...");
+            // fieldsRoot.appendTo(root);
+            var fieldsContainer = $("<ul/>");
+            fieldsContainer.appendTo(fieldsRoot);
+            for (var i = 0; i < fields_count; i++) {
+                address = input.cursor;
+                var fldRoot = classFileMember(fieldsType + "[" + i.toString() + "]", "", address, "...");
+                fldRoot.appendTo(fieldsContainer);
+                var fldContainer = $("<ul/>");
+                fldContainer.appendTo(fldRoot);
+                // u2 access_flags;
+                accessFlags(input, "access_flags").appendTo(fldContainer);
+                // u2 name_index;
+                classFileMemberU2(input, "name_index").appendTo(fldContainer);
+                // u2 descriptor_index;
+                classFileMemberU2(input, "descriptor_index").appendTo(fldContainer);
+                // u2 attributes_count;
+                address = input.cursor;
+                var attributes_count = input.u2();
+                classFileMember("attributes_count", attributes_count.toString(), address, input.latestDump)
+                    .appendTo(fldContainer);
+                // attribute_info attributes[attributes_count];
+                readAttributes(input, attributes_count).appendTo(fldContainer);
+            }
+            return fieldsRoot;
         }
         // Read class file members one by one, generate a node for each member, and add that node to the tree view.
         // input: DataInputB
@@ -237,6 +344,43 @@ $(window).load(function(){
                     classFileMember("UNKNOWN", "", address, "...");
                 }
             }
+            // u2 access_flags;
+            accessFlags(input, "access_flags").appendTo(root);
+            // u2 this_class;
+            classFileMemberU2(input, "this_class").appendTo(root);
+            // u2 super_class;
+            classFileMemberU2(input, "super_class").appendTo(root);
+            // u2 interface_count;
+            address = input.cursor;
+            var interface_count = input.u2();
+            classFileMember("interface_count", interface_count.toString(), address, input.latestDump).appendTo(root);
+            // u2 interfaces[interface_count];
+            address = input.cursor;
+            var interfaces = classFileMember("interfaces", "", address, "...");
+            interfaces.appendTo(root);
+            var interfacesRoot = $("<ul/>").appendTo(interfaces);
+            for (var i = 0; i < interface_count; i++) {
+                classFileMemberU2(input, "interfaces[" + i.toString() + "]").appendTo(interfacesRoot);
+            }
+            // u2 fields_count;
+            address = input.cursor;
+            var fields_count = input.u2();
+            classFileMember("fields_count", fields_count.toString(), address, input.latestDump).appendTo(root);
+            // field_info fields[fields_count];
+            readFields(input, fields_count, "field").appendTo(root);
+            // u2 methods_count;
+            address = input.cursor;
+            var methods_count = input.u2();
+            classFileMember("methods_count", methods_count.toString(), address, input.latestDump)
+                .appendTo(root);
+            // method_info methods[methods_count];
+            readFields(input, methods_count, "method").appendTo(root);
+            // u2 attributes_count;
+            address = input.cursor;
+            var attributes_count = input.u2();
+            classFileMember("attributes_count", attributes_count.toString(), address, input.latestDump).appendTo(root);
+            // attribute_info attributes[attributes_count];
+            readAttributes(input, attributes_count).appendTo(root);
         }
         $(document).ready(function() {
                 if (window.File && window.FileReader && window.FileList && window.Blob) {
