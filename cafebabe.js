@@ -120,7 +120,7 @@ $(window).load(function(){
         // caption: its name, str: its value, addr: its offset in file, dump: the hex-dump of its content.
         function classFileMember(caption, str, addr, dump) {
             var li = $("<li/>")
-                .append("<u><strong>" + esc(caption) + "</strong>&nbsp:&nbsp" + esc(str) + "&nbsp;</u>" +
+                .append("<u><strong>" + esc(caption) + "</strong>&nbsp;:&nbsp;" + esc(str) + "&nbsp;</u>" +
                         "<code>address@" + dec2hex(addr, 8) + " : " + dump + "</code>");
             return li;
         }
