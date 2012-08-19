@@ -340,8 +340,11 @@ $(window).load(function(){
                     classFileMemberU2(input, "name_and_type_index").appendTo(constantContainer);
                     break;
                 default:
-                    address = input.cursor;
-                    classFileMember("UNKNOWN", "", address, "...");
+                    // Rarely reaches here.
+                    // However, MarsLaunch.class in MARS 4.1 (MIPS simulator) contains zero tag at constant_pool[775].
+                    setAlert("Unknown tag (" + tag.toString() + ") in the CONSTANT[" + i + "]");
+                    // Prevent the reader from generating garbage.
+                    return;
                 }
             }
             // u2 access_flags;
