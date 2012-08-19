@@ -413,7 +413,9 @@ $(window).load(function(){
                         }
                         var treeArea = $("#class-tree");
                         var tree = $("<ul/>");
-                        var heading = $("<li><a href='#'><strong>Class</strong></a></li>", {id : "class-heading"});
+                        var heading = $("<li><a href='#'><strong>Class file: " +
+                                        esc(files[0].name + " (" + files[0].size + " bytes)") +
+                                        "</strong></a></li>", {id : "class-heading"});
                         var root = $("<ul/>", {id : "class-root"});
                         treeArea.empty();
                         heading.append(root);
