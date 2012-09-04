@@ -421,6 +421,10 @@ $(window).load(function(){
                         heading.append(root);
                         tree.append(heading);
                         treeArea.append(tree);
+                        if (files[0].size > 50*1024) { // Limit the file size.
+                            setAlert("File is too big.");
+                            return;
+                        }
                         var reader = new FileReader();
                         reader.onload = function(e) {
                             var buf = e.target.result;
