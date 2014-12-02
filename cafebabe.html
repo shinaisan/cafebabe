@@ -4,9 +4,14 @@
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <title>Cafebabe : Java Class File Viewer</title>
 
-  <link rel='stylesheet' type='text/css' href='http://twitter.github.com/bootstrap/assets/css/bootstrap.css'></link>
-  <script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js'></script>
-  <script type='text/javascript' src='http://static.jstree.com/v.1.0pre/jquery.jstree.js'></script>
+  <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css'></link>
+  <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css'></link>
+  <script type='text/javascript' src='https://code.jquery.com/jquery-2.1.1.js'></script>
+  <script type='text/javascript' src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js'></script>
+
+  <link rel='stylesheet' href='http://static.jstree.com/3.0.8/assets/dist/themes/default/style.min.css'></link>
+  <script type='text/javascript' src='http://static.jstree.com/3.0.8/assets/dist/jstree.min.js'></script>
+
   <script type='text/javascript' src='cafebabe.js'></script>
   
   <style type='text/css'>
@@ -20,24 +25,19 @@
 
 <body>
 
-  <div class="navbar navbar-fixed-top">
-    <div class="navbar-inner">
-      <div class="container">
-        <div class="nav-collapse collapse">
-          <ul class="nav">
-            <li><a href="#">Cafebabe : Java Class File Viewer for #binsummer</a></li>
-          </ul>
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="#">Cafebabe - A Java Class File Viewer</a>
         </div>
       </div>
-    </div>
-  </div>
+	</nav>
 
   <div class="container">
     <div id="menu-and-contents" class="row">
 
-      <div class="span3">
-        <div class="well">
-          <ul class="nav nav-list">
+      <div class="col-sm-3 sidebar">
+          <ul class="nav nav-sidebar">
             <li class="nav-header">Links</li>
             <li>
               <a href="http://wiki.livedoor.jp/n7shi/d/binsummer2012"><i class="icon-home"></i>Wiki</a>
@@ -66,15 +66,14 @@
               <a href="http://www.jstree.com/"><i class="icon-star"></i>jsTree</a>
             </li>
           </ul>
-        </div>
       </div>
 
-      <div class="span7">
+      <div class="col-sm-9 main">
         <div id="drop-area" class="well"><br/><br/><br/>Drop a class file here ...<br/><br/><br/></div>
         <div id="class-tree">
         </div>
       </div>
-
+	  
     </div>
 
     <hr/>
